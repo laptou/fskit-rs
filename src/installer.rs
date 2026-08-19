@@ -250,10 +250,7 @@ fn remove_app_state(app_id: &str, appex_id: &str) {
     ] {
         if path.exists() {
             if let Err(error) = fs::remove_dir_all(&path) {
-                log::warn!(
-                    "failed to remove app state at {}: {error}",
-                    path.display()
-                );
+                log::warn!("failed to remove app state at {}: {error}", path.display());
             }
         }
     }
