@@ -68,7 +68,7 @@ pub(super) fn uninstall(app_name: &OsStr) -> Result<()> {
 
     unregister_path(&app_path, &appex);
     unregister_registrations(&appex_id);
-    remove_app_state(&app_id, &appex_id)?;
+    remove_app_state(&app_id, &appex_id);
 
     fs::remove_dir_all(&app_path)?;
 
@@ -234,11 +234,12 @@ fn unregister_path(app_path: &Path, appex_path: &Path) {
     let _ = run_cmd(LSREGISTER, &["-u", app_path.to_str().unwrap()]);
 }
 
-fn remove_app_state(app_id: &str, appex_id: &str) -> Result<()> {
+fn remove_app_state(app_id: &str, appex_id: &str) {
     let Some(home) = env::var_os("HOME") else {
-        return Ok(());
+        return;
     };
 
+    // app containers are TCC-protected, so stale state must not block uninstall.
     for path in [
         Path::new(&home).join(APPLICATION_SCRIPTS_DIR).join(app_id),
         Path::new(&home)
@@ -248,11 +249,14 @@ fn remove_app_state(app_id: &str, appex_id: &str) -> Result<()> {
         Path::new(&home).join(CONTAINERS_DIR).join(appex_id),
     ] {
         if path.exists() {
-            fs::remove_dir_all(path)?;
+            if let Err(error) = fs::remove_dir_all(&path) {
+                log::warn!(
+                    "failed to remove app state at {}: {error}",
+                    path.display()
+                );
+            }
         }
     }
-
-    Ok(())
 }
 
 fn is_active(appex_id: &str, app_path: &Path) -> Result<bool> {
