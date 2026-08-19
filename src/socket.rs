@@ -120,7 +120,7 @@ where
                             let mut frozen = buf.clone().freeze();
                             match Request::decode_length_delimited(&mut frozen) {
                                 Ok(request) => {
-                                    debug!("received message: {request:?}");
+                                    debug!("received message: id={}", request.id);
                                     buf.advance(buf.len() - frozen.remaining());
 
                                     let content = match request.content {
